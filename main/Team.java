@@ -1,15 +1,15 @@
 package main;
 
 public class Team {
-	public String name;
+	public String name, teamKey;
 	public int number;
-	public String city, state, country;
+	public String city, country;
 	
-	public Team(String name, int number, String city, String state, String country) {
+	public Team(String name, String teamKey, int number, String city, String country) {
 		this.name = name;
+		this.teamKey = teamKey;
 		this.number = number;
 		this.city = city;
-		this.state = state;
 		this.country = country;
 	}
 }

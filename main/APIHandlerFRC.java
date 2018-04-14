@@ -3,6 +3,10 @@ package main;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class APIHandlerFRC extends APIHandler {
 	
@@ -10,34 +14,37 @@ public class APIHandlerFRC extends APIHandler {
 		super(apiURL, authKey);
 	}
 	
+	
+	public ArrayList<String> getTeamsMedia(ArrayList<Team> teams, int year) {
+		for (Team team: teams) {
+			String information = getInfo("/team/"+ team.teamKey + "/media/" + year);
+			System.out.println(information);
+		}
+		return null;
+	}
+	
 	public ArrayList<Team> getEventTeams(String eventKey, int year) {
-		String information;
-		information = getInfo("/event/"+ year + eventKey+ "/teams");//.replaceAll("\\s+","");
-		
-		information = information.replace("[", "");
-		information = information.replace("]", "");
-		information = information.replace("{", "");
-		
-		
-		String[] teamsRaw = information.split("},");
-		for (String d : teamsRaw) {
-			System.out.println(d);
-		}
-		ArrayList<String[]> teamRaw = new ArrayList<>();
-		
-		for (String team : teamsRaw) {
-			System.out.println(team);
-			teamRaw.add(team.split(","));
-		}
-		
+		String information = getInfo("/event/"+ year + eventKey+ "/teams/simple");
+
+		JSONArray teamInformation = new JSONArray(information);
 		ArrayList<Team> teams = new ArrayList<>();
 		
-		for (String[] team : teamRaw) {
-			teams.add(new Team(team[2], Integer.parseInt(team[1]), team[4], team[5], team[6]));
+		for (int i = 0; i < teamInformation.length(); i++) {
+		    String name = teamInformation.getJSONObject(i).getString("nickname");
+		    String teamKey = teamInformation.getJSONObject(i).getString("key");
+		    int number = teamInformation.getJSONObject(i).getInt("team_number");
+		    String city = teamInformation.getJSONObject(i).getString("city");
+		    String country = teamInformation.getJSONObject(i).getString("country");
+		    teams.add(new Team(name, teamKey, number, city, country));
 		}
 		
-		return teams;
-		
+		Collections.sort(teams, new Comparator<Team>() {
+	        @Override public int compare(Team t1, Team t2) {
+	            return t1.number - t2.number; // Ascending
+	        }
+	    });
+		System.out.println(teams.size() + " teams found at " + eventKey + "!");
+		return teams;		
 	}
 	
 	public ArrayList<Integer> getEventTeamNumbers(String eventKey, int year) {

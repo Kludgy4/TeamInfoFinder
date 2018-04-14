@@ -12,9 +12,10 @@ public class DataFinder {
 			"?X-TBA-Auth-Key=bwidXGDgsZNrUbUIYG9zrLYfubC14liNqFwshbbVsrBRzAvMprB8MmLfyisKwDBJ"
 		);
 		
-		for (Team team : tba.getEventTeams("gal", 2018)) {
-			print(team.name);
-		}
+		//Get teams at event
+		teams = tba.getEventTeams("gal", 2018);
+		
+		//Does stuff with teams
 		
 		//tba.getInfo("/event/2018gal/teams/keys");
 			
