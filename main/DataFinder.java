@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class DataFinder {
 	
 	public static ArrayList<Team> teams = new ArrayList<>();
+	public static int year = 2018;
 	
 	public static void main(String[] args) {
 		APIHandlerFRC tba = new APIHandlerFRC(
@@ -13,9 +14,10 @@ public class DataFinder {
 		);
 		
 		//Get teams at event
-		teams = tba.getEventTeams("gal", 2018);
+		teams = tba.getEventTeams("gal", year);
 		
 		//Does stuff with teams
+		tba.getEventTeamMedia(teams, year, "C:\\Users\\Matthew\\Pictures\\Test");
 		
 		//tba.getInfo("/event/2018gal/teams/keys");
 			
