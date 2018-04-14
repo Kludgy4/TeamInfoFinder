@@ -4,6 +4,7 @@ public class Team {
 	public String name, teamKey;
 	public int number;
 	public String city, country;
+	public double rank;
 	
 	public Team(String name, String teamKey, int number, String city, String country) {
 		this.name = name;

@@ -1,7 +1,12 @@
 package main;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class APIHandlerFRC extends APIHandler {
 	
@@ -177,4 +183,71 @@ public class APIHandlerFRC extends APIHandler {
 			}
 		});
 	}*/
+	
+	public void getEventRankings(String eventKey, int year) {
+		String information = getInfo("/event/"+ year + eventKey+ "/rankings");
+			
+		
+		JSONArray teamInformation = (new JSONObject(information)).getJSONArray("rankings");
+		
+		for (int i = 0; i < teamInformation.length(); i++) {
+			int rank = teamInformation.getJSONObject(i).getInt("rank");
+			String teamKey = teamInformation.getJSONObject(i).getString("team_key");
+			
+			float RP = teamInformation.getJSONObject(i).getJSONArray("sort_orders").getFloat(0);
+			int matchesPlayed = teamInformation.getJSONObject(i).getInt("matches_played");
+			
+		    int totalRP = teamInformation.getJSONObject(i).getJSONArray("extra_stats").getInt(0);
+		    
+		    System.out.println(teamKey + " is " + rank + " with RP " + RP + "(" + matchesPlayed + ", " + totalRP + ")");
+		}
+		
+	}
+
+	public ArrayList<Team> scoutStatistic(ArrayList<Team> teams, int year, String statistic) {
+		
+		ArrayList<Team> rankedTeams = null;
+		rankedTeams = new ArrayList<>();
+		
+		double j = 0;
+		for (Team team : teams) {
+			String percentComplete = String.format("%.2f", (j / teams.size() *100));
+			System.out.println(percentComplete + "% complete indexing " + statistic);
+			double numericStatistic = 0;
+			double totalMatches = 0;
+			String information = getInfo("/team/"+ team.teamKey + "/matches/" + year);
+			JSONArray teamInformation = new JSONArray(information);
+			for (int i = 0; i < teamInformation.length(); i++) {
+				if (teamInformation.getJSONObject(i).getString("comp_level").equals("qm")) {	
+					JSONArray blue = teamInformation.getJSONObject(i).getJSONObject("alliances").getJSONObject("blue").getJSONArray("team_keys");
+					String alliance;
+					if (blue.getString(0).equals(team.teamKey) || blue.getString(1).equals(team.teamKey) || blue.getString(2).equals(team.teamKey)) {
+						alliance = "blue";
+					} else {alliance = "red";}
+					JSONObject matchInfo = teamInformation.getJSONObject(i).getJSONObject("score_breakdown").getJSONObject(alliance);
+					
+					numericStatistic += matchInfo.getInt(statistic);
+	
+					totalMatches++;
+				}
+			}
+			team.rank = numericStatistic/totalMatches;
+			rankedTeams.add(team);
+			j++;
+		}
+		Collections.sort(rankedTeams, new Comparator<Team>() {
+	        @Override public int compare(Team t1, Team t2) {
+	            return (int) ((t2.rank - t1.rank)*1000); // Ascending
+	        }
+	    });
+		System.out.println("------------------------------------------------------------------------------------------------------------------");
+		System.out.println(statistic.toUpperCase());
+		int i = 1;
+		for (Team t : rankedTeams) {
+			t.rank = Double.parseDouble(String.format("%.3f", t.rank));
+			System.out.println(i + ": " + t.name + " - " + t.rank);
+			i++;
+		}
+		return rankedTeams;
+	}
 }
