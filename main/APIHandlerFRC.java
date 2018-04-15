@@ -122,98 +122,31 @@ public class APIHandlerFRC extends APIHandler {
         }
 	}
 	
-	/*public static void handleSave(String output, GameRecord game) {
-        JFileChooser f = new JFileChooser();
-        f.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String defLoc = Defaults.getFilename() + "\\Match " + game.match + " Team " + game.team + ".csv";
-        f.setSelectedFile(defLoc.length() > 0 ? new File(defLoc) : null);
-        f.setFileFilter(new FileFilter() {
-			public String getDescription() {
-				return "Scouting interface record (.csv)";
-			}
-			
-			public boolean accept(File f) {
-				return f.isDirectory() || f.getPath().endsWith(".csv");
-			}
-		});
-        f.setAcceptAllFileFilterUsed(false);
-        int sel = f.showSaveDialog(ScoutingInterface.app);
-
-		if(sel == JFileChooser.APPROVE_OPTION && f.getSelectedFile() != null) {
-			String path = f.getSelectedFile().getPath();
-			
-			if(!path.endsWith(".csv")) path += ".csv";
-			
-			try{
-				saveRecord(path, output);
-			}
-			catch(Exception e) {
-				String buttons[] = {"Try Again"};
-	            JOptionPane.showOptionDialog(ScoutingInterface.app, 
-	                "Failed to save record.", "Scouting interface", 
-	                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, 
-	                buttons,buttons[0]);
-	            
-	            handleSave(output, game);
-			}
-		}
-	}
-
-	public static void saveRecord(String filename, String output) {
-		try {
-			Defaults.saveFileLoc(filename);
-			PrintStream file = new PrintStream(filename);
-			file.println(output);
-			file.close();
-			
-			createSendThread(filename, output).start();
-		}
-		catch(FileNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private static Thread createSendThread(String filename, String output) {
-		return new Thread(() -> {
-			try {
-				while(SendFile.sendFile(filename, filename.substring(filename.lastIndexOf("\\") + 1), ComSettings.sender.getBytes()) != 0);
-			}
-			catch(IOException | InterruptedException e) {
-				createSendThread(filename, output);
-			}
-		});
-	}*/
-	
 	public void getEventRankings(String eventKey, int year) {
-		String information = getInfo("/event/"+ year + eventKey+ "/rankings");
-			
-		
+		String information = getInfo("/event/"+ year + eventKey+ "/rankings");		
 		JSONArray teamInformation = (new JSONObject(information)).getJSONArray("rankings");
-		
-		for (int i = 0; i < teamInformation.length(); i++) {
-			int rank = teamInformation.getJSONObject(i).getInt("rank");
-			String teamKey = teamInformation.getJSONObject(i).getString("team_key");
-			
-			float RP = teamInformation.getJSONObject(i).getJSONArray("sort_orders").getFloat(0);
-			int matchesPlayed = teamInformation.getJSONObject(i).getInt("matches_played");
-			
-		    int totalRP = teamInformation.getJSONObject(i).getJSONArray("extra_stats").getInt(0);
-		    
-		    System.out.println(teamKey + " is " + rank + " with RP " + RP + "(" + matchesPlayed + ", " + totalRP + ")");
+	
+		for (int i = 0; i < teamInformation.length(); i++) {		    
+			System.out.println(teamInformation.getJSONObject(i).getString("team_key") + " is " + 
+		    					teamInformation.getJSONObject(i).getInt("rank") + " with RP " + 
+		    					teamInformation.getJSONObject(i).getJSONArray("sort_orders").getFloat(0) + 
+		    					"(" +  teamInformation.getJSONObject(i).getInt("matches_played") + 
+		    					", " + teamInformation.getJSONObject(i).getJSONArray("extra_stats").getInt(0) + ")");
 		}
 		
 	}
 
-	public ArrayList<Team> scoutStatistic(ArrayList<Team> teams, int year, String statistic) {
+	public ArrayList<Team> scoutStatistics(ArrayList<Team> teams, int year, String... statistics) {
 		
 		ArrayList<Team> rankedTeams = null;
 		rankedTeams = new ArrayList<>();
 		
+		ArrayList<Double> stats = new ArrayList<>();
+		stats.add(0, (double) 0);
 		double j = 0;
 		for (Team team : teams) {
-			String percentComplete = String.format("%.2f", (j / teams.size() *100));
-			System.out.println(percentComplete + "% complete indexing " + statistic);
-			double numericStatistic = 0;
+			System.out.println(formatDouble("%.2f", j / teams.size() *100) + "% complete indexing " + team.name);
+			
 			double totalMatches = 0;
 			String information = getInfo("/team/"+ team.teamKey + "/matches/" + year);
 			JSONArray teamInformation = new JSONArray(information);
@@ -224,30 +157,61 @@ public class APIHandlerFRC extends APIHandler {
 					if (blue.getString(0).equals(team.teamKey) || blue.getString(1).equals(team.teamKey) || blue.getString(2).equals(team.teamKey)) {
 						alliance = "blue";
 					} else {alliance = "red";}
-					JSONObject matchInfo = teamInformation.getJSONObject(i).getJSONObject("score_breakdown").getJSONObject(alliance);
 					
-					numericStatistic += matchInfo.getInt(statistic);
-	
+					JSONObject matchInfo = teamInformation.getJSONObject(i).getJSONObject("score_breakdown").getJSONObject(alliance);
+					System.out.println("stats size" + statistics);
+					for (int k = 0; k < statistics.length; k++) {
+						System.out.println(k);
+						stats.add(k, matchInfo.getDouble(statistics[k]));
+					}
 					totalMatches++;
 				}
 			}
-			team.rank = numericStatistic/totalMatches;
+			int size = stats.size();
+			for (int i = 0; i < size; i++) {
+				stats.add(i, stats.get(i)/totalMatches);
+				System.out.println(stats.size());
+			}
+			team.numericalStatistics = new ArrayList<>();
+			team.numericalStatistics.addAll(stats);
 			rankedTeams.add(team);
+			System.out.print(team.number + ", " + team.name + ",");
+			for (double d : team.numericalStatistics) {
+				System.out.print(formatDouble("%.3f", d) + ",");
+			}
+			System.out.print("\n");
+			stats.clear();
 			j++;
 		}
-		Collections.sort(rankedTeams, new Comparator<Team>() {
+		/*Collections.sort(rankedTeams, new Comparator<Team>() {
 	        @Override public int compare(Team t1, Team t2) {
 	            return (int) ((t2.rank - t1.rank)*1000); // Ascending
 	        }
-	    });
+	    });*/
 		System.out.println("------------------------------------------------------------------------------------------------------------------");
-		System.out.println(statistic.toUpperCase());
+		ArrayList<String> li = new ArrayList<String>();
+		System.out.print("TeamName");
+		for (String s : statistics) {
+			System.out.print(","+s);
+		}
+		for (Team t : rankedTeams) {
+			System.out.print(t.number + ", " + t.name + ",");
+			for (double d : t.numericalStatistics) {
+				System.out.print(formatDouble("%.3f", d) + ",");
+			}
+			System.out.print("\n");
+		}
+		/*System.out.println(statistic.toUpperCase());
 		int i = 1;
 		for (Team t : rankedTeams) {
-			t.rank = Double.parseDouble(String.format("%.3f", t.rank));
+			t.rank = formatDouble( t.rank);
 			System.out.println(i + ": " + t.name + " - " + t.rank);
 			i++;
-		}
+		}*/
 		return rankedTeams;
+	}
+	
+	public double formatDouble(String format, double d) {
+		return Double.parseDouble(String.format(format, d));
 	}
 }

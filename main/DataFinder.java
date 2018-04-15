@@ -26,7 +26,10 @@ public class DataFinder {
 		
 		Writer writer = null;
 		try {writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("C:\\Users\\Matthew\\Documents\\Test\\TestData.txt"), "utf-8"));
-			tba.scoutStatistic(teams, year, "totalPoints");
+			tba.scoutStatistics(teams, year, "autoOwnershipPoints"); /*"autoPoints", 
+					"autoRunPoints", "autoScaleOwnershipSec", "autoSwitchOwnershipSec", "endgamePoints", "foulPoints",
+					"rp", "teleopOwnershipPoints", "teleopPoints", "teleopScaleOwnershipSec", "teleopSwitchOwnershipSec", 
+					"totalPoints", "vaultPoints");*/
 		} catch (IOException ex) {ex.printStackTrace();} finally {try {writer.close();} catch (Exception ex) {}}
 		
 		//tba.getInfo("/event/2018gal/teams/keys");

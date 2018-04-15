@@ -1,10 +1,12 @@
 package main;
 
+import java.util.ArrayList;
+
 public class Team {
 	public String name, teamKey;
 	public int number;
 	public String city, country;
-	public double rank;
+	public ArrayList<Double> numericalStatistics;
 	
 	public Team(String name, String teamKey, int number, String city, String country) {
 		this.name = name;
