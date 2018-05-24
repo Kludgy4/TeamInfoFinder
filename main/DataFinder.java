@@ -19,15 +19,17 @@ public class DataFinder {
 		);
 		
 		//Get teams at event
-		teams = tba.getEventTeams("gal", year);
+		teams = tba.getEventTeams("cmptx", year);
+		//tba.scoutStatistic(teams, year, "autoRunPoints");
+		tba.getEventMatchPredictions("cmptx", year, 3, "sf");
 		
 		//Does stuff with teams
 		//tba.getEventTeamMedia(teams, year, "C:\\Users\\Matthew\\Pictures\\Test");
 		
-		Writer writer = null;
+		/*Writer writer = null;
 		try {writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("C:\\Users\\Matthew\\Documents\\Test\\TestData.txt"), "utf-8"));
-			tba.scoutStatistic(teams, year, "totalPoints");
-		} catch (IOException ex) {ex.printStackTrace();} finally {try {writer.close();} catch (Exception ex) {}}
+			tba.scoutStatistic(teams, year, "autoScaleOwnershipSec");
+		} catch (IOException ex) {ex.printStackTrace();} finally {try {writer.close();} catch (Exception ex) {}}*/
 		
 		//tba.getInfo("/event/2018gal/teams/keys");
 			
