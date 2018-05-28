@@ -1,16 +1,12 @@
 package main;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 
 public class DataFinder {
 	
-	public static ArrayList<Team> teams = new ArrayList<>();
-	public static int year = 2018;
+	public static Scanner reader = new Scanner(System.in);
 	
 	public static void main(String[] args) {
 		APIHandlerFRC tba = new APIHandlerFRC(
@@ -18,29 +14,44 @@ public class DataFinder {
 			"?X-TBA-Auth-Key=bwidXGDgsZNrUbUIYG9zrLYfubC14liNqFwshbbVsrBRzAvMprB8MmLfyisKwDBJ"
 		);
 		
-		//Get teams at event
-		teams = tba.getEventTeams("cmptx", year);
-		//tba.scoutStatistic(teams, year, "autoRunPoints");
-		tba.getEventMatchPredictions("cmptx", year, 3, "sf");
-		
-		//Does stuff with teams
-		//tba.getEventTeamMedia(teams, year, "C:\\Users\\Matthew\\Pictures\\Test");
-		
-		/*Writer writer = null;
-		try {writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("C:\\Users\\Matthew\\Documents\\Test\\TestData.txt"), "utf-8"));
-			tba.scoutStatistic(teams, year, "autoScaleOwnershipSec");
-		} catch (IOException ex) {ex.printStackTrace();} finally {try {writer.close();} catch (Exception ex) {}}*/
-		
-		//tba.getInfo("/event/2018gal/teams/keys");
+		do {
+			if (getString("Do you want to prescout a Team or an Event?", "Team", "Event").equals("Team")) {
+				getString("What is the number of the Team you wish to prescout?");
+			} else {
+				
+			}
+		} while (getString("Would you like to prescout more?", "Yes", "No").equals("Yes"));
 			
 	}
 	
-	public static void print(String msg) {
-		System.out.println(msg);
-	}
-	
-	public static void print(int num) {
-		System.out.println(num);
+	public static String getString(String msg, String... options) {
+		
+		String str;
+		
+		if (options.length != 0) {
+			ArrayList<String> optionsList = new ArrayList<String>();
+			optionsList.addAll(Arrays.asList(options));
+			
+			boolean notValid;
+			do {
+				System.out.print(msg + " - " + "Respond with one of the following options: ");
+				for (String o : optionsList) {
+					if (optionsList.indexOf(o) != optionsList.size()-1) {
+						System.out.print(o + ", ");
+					} else {
+						System.out.println(o);
+					}
+					
+				}
+				str = reader.nextLine();
+				notValid = !optionsList.contains(str);
+				if (notValid) System.out.println("This input is an invalid response. Please respond to the question with a given option.");
+			} while (notValid);
+		} else {
+			str = reader.nextLine();
+		}
+
+		return str;
 	}
 
 }
