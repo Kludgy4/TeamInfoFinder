@@ -1,12 +1,6 @@
 package main;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,8 +13,7 @@ import org.json.JSONObject;
 
 public class APIHandlerFRC extends APIHandler {
 	
-	private static int imgNum = 1;
-	private static int videoNum = 1;
+	private static int imgNum = 1, videoNum = 1;
 	
 	public APIHandlerFRC(String apiURL, String authKey) {
 		super(apiURL, authKey);
@@ -123,7 +116,9 @@ public class APIHandlerFRC extends APIHandler {
 	}
 	
 	public void getEventRankings(String eventKey, int year) {
-		String information = getInfo("/event/"+ year + eventKey+ "/rankings");		
+
+		String information = getInfo("/event/"+ year + eventKey+ "/rankings");
+			
 		JSONArray teamInformation = (new JSONObject(information)).getJSONArray("rankings");
 	
 		for (int i = 0; i < teamInformation.length(); i++) {		    
@@ -185,11 +180,10 @@ public class APIHandlerFRC extends APIHandler {
 		}
 		/*Collections.sort(rankedTeams, new Comparator<Team>() {
 	        @Override public int compare(Team t1, Team t2) {
-	            return (int) ((t2.rank - t1.rank)*1000); // Ascending
+	            return (int) ((t1.number - t2.number)*1000); // Ascending
 	        }
 	    });*/
 		System.out.println("------------------------------------------------------------------------------------------------------------------");
-		ArrayList<String> li = new ArrayList<String>();
 		System.out.print("TeamName");
 		for (String s : statistics) {
 			System.out.print(","+s);
@@ -204,11 +198,77 @@ public class APIHandlerFRC extends APIHandler {
 		/*System.out.println(statistic.toUpperCase());
 		int i = 1;
 		for (Team t : rankedTeams) {
-			t.rank = formatDouble( t.rank);
-			System.out.println(i + ": " + t.name + " - " + t.rank);
+
+			t.rank = Double.parseDouble(String.format("%.3f", t.rank));
+			//System.out.print(t.number + ",");
+			//System.out.print(t.name + ",");
+			System.out.println(t.rank);
 			i++;
 		}*/
 		return rankedTeams;
+	}
+	
+	public void getEventPredictions(String eventKey, int year) {
+		String information = getInfo("/event/"+ year + eventKey+ "/predictions");
+		//System.out.println(information);
+		
+		for (int i = 1; i <= 130; i++) {
+			JSONObject teamInformation = (new JSONObject(information).getJSONObject("match_predictions")
+					.getJSONObject("qual").getJSONObject(year+eventKey.toLowerCase()+"_qm"+i));
+			JSONObject redInfo = teamInformation.getJSONObject("red");
+			JSONObject blueInfo = teamInformation.getJSONObject("blue");
+			
+			System.out.println("---------------------------------------------------");
+			System.out.println("Qualification " + i + ": ");
+			
+			System.out.print("  Red: ");
+			double redScore = redInfo.getDouble("score");
+			System.out.println(redScore);
+			System.out.println("   Red Endgame Points: " + redInfo.getDouble("endgame_points"));
+			//System.out.println(redInfo);
+			System.out.print("  Blue: ");
+			double blueScore = blueInfo.getDouble("score");
+			System.out.println(blueScore);
+			System.out.println("   Blue Endgame Points: " + blueInfo.getDouble("endgame_points"));
+			
+			if (redScore > blueScore) System.out.println("Red should beat blue");
+			else System.out.println("Blue should beat red");
+		}
+	}
+	
+	public void getEventMatchPredictions(String eventKey, int year, int matchNum, String matchType) {
+		String information = getInfo("/event/"+ year + eventKey+ "/predictions");
+		System.out.println(information);
+		
+		JSONObject teamInformation = (new JSONObject(information).getJSONObject("match_predictions")
+				.getJSONObject("qual").getJSONObject(year+eventKey.toLowerCase()+"_matchType"+matchNum));
+		JSONObject redInfo = teamInformation.getJSONObject("red");
+		JSONObject blueInfo = teamInformation.getJSONObject("blue");
+		
+		System.out.println("---------------------------------------------------");
+		System.out.println("Qualification " + matchNum + ": ");
+		
+		System.out.print("  Red: ");
+		double redScore = formatDouble(redInfo.getDouble("score"));
+		System.out.println(redScore);
+		System.out.println("    Auto Points: " + formatDouble(redInfo.getDouble("auto_points")));
+		System.out.println("    Endgame Points: " + formatDouble(redInfo.getDouble("endgame_points")));
+		System.out.println("    RP: Auto Quest - " + formatDouble(redInfo.getDouble("prob_auto_quest")*100) + "%");
+		System.out.println("        Boss - " + formatDouble(redInfo.getDouble("prob_face_boss")*100) + "%");
+		System.out.print("  Blue: ");
+		double blueScore = formatDouble(blueInfo.getDouble("score"));
+		System.out.println(blueScore);
+		System.out.println("    Auto Points: " + formatDouble(blueInfo.getDouble("auto_points")));
+		System.out.println("    Endgame Points: " + formatDouble(blueInfo.getDouble("endgame_points")));
+		System.out.println("    RP: Auto Quest - " + formatDouble(blueInfo.getDouble("prob_auto_quest")*100) + "%");
+		System.out.println("        Boss - " + formatDouble(blueInfo.getDouble("prob_face_boss")*100) + "%");
+		
+		if (redScore > blueScore) System.out.println("Red should beat blue");
+		else System.out.println("Blue should beat red");
+	}
+	
+	public double formatDouble(double d) {
+		return Double.parseDouble(String.format("%.4f", d));
 	}
 	
 	public double formatDouble(String format, double d) {
