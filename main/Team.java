@@ -8,6 +8,8 @@ public class Team {
 	public String city, country, stateProv;
 	public String nickname, motto;
 	public URL website;
+	
+	StatisticList statList = new StatisticList();
 		
 	/**
 	 * Basic Team constructor, only information required to be provided by a team

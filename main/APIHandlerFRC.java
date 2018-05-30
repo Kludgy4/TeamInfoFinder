@@ -63,18 +63,16 @@ public class APIHandlerFRC extends APIHandler {
 	}
 	
 	public ArrayList<Team> getEventTeams(String eventKey, int year) {
-		String information = getInfo("/event/"+ year + eventKey+ "/teams/simple");
+		String information = getInfo("/event/"+ year + eventKey+ "/teams");
 
 		JSONArray teamInformation = new JSONArray(information);
 		ArrayList<Team> teams = new ArrayList<>();
-		
 		for (int i = 0; i < teamInformation.length(); i++) {
-		    String name = teamInformation.getJSONObject(i).getString("nickname");
 		    String teamKey = teamInformation.getJSONObject(i).getString("key");
 		    int number = teamInformation.getJSONObject(i).getInt("team_number");
-		    String city = teamInformation.getJSONObject(i).getString("city");
-		    String country = teamInformation.getJSONObject(i).getString("country");
-		    teams.add(new Team(name, teamKey, number, city, country));
+		    String name = teamInformation.getJSONObject(i).getString("nickname");
+		    int rookieYear = teamInformation.getJSONObject(i).getInt("rookie_year");
+		    teams.add(new Team(teamKey, number, name, rookieYear));
 		}
 		
 		Collections.sort(teams, new Comparator<Team>() {
@@ -131,81 +129,45 @@ public class APIHandlerFRC extends APIHandler {
 		
 	}
 
-	public ArrayList<Team> scoutStatistics(ArrayList<Team> teams, int year, String... statistics) {
-		
-		ArrayList<Team> rankedTeams = null;
-		rankedTeams = new ArrayList<>();
-		
-		ArrayList<Double> stats = new ArrayList<>();
-		stats.add(0, (double) 0);
-		double j = 0;
-		for (Team team : teams) {
-			System.out.println(formatDouble("%.2f", j / teams.size() *100) + "% complete indexing " + team.name);
-			
-			double totalMatches = 0;
-			String information = getInfo("/team/"+ team.teamKey + "/matches/" + year);
-			JSONArray teamInformation = new JSONArray(information);
-			for (int i = 0; i < teamInformation.length(); i++) {
+	public void scoutTeamStatistics(Team t, int year, ArrayList<String> statistics) {
+		String information = getInfo("/team/"+ t.teamKey + "/matches/" + year);
+				
+		JSONArray teamInformation = new JSONArray(information);
+		for (int i = 0; i < teamInformation.length()-1; i++) {
+			try {
 				if (teamInformation.getJSONObject(i).getString("comp_level").equals("qm")) {	
 					JSONArray blue = teamInformation.getJSONObject(i).getJSONObject("alliances").getJSONObject("blue").getJSONArray("team_keys");
 					String alliance;
-					if (blue.getString(0).equals(team.teamKey) || blue.getString(1).equals(team.teamKey) || blue.getString(2).equals(team.teamKey)) {
+					if (blue.getString(0).equals(t.teamKey) || blue.getString(1).equals(t.teamKey) || blue.getString(2).equals(t.teamKey)) {
 						alliance = "blue";
 					} else {alliance = "red";}
-					
 					JSONObject matchInfo = teamInformation.getJSONObject(i).getJSONObject("score_breakdown").getJSONObject(alliance);
-					System.out.println("stats size" + statistics);
-					for (int k = 0; k < statistics.length; k++) {
-						System.out.println(k);
-						stats.add(k, matchInfo.getDouble(statistics[k]));
+					
+					for (String s : statistics) {
+						Statistic stat;
+						try {stat = new Statistic(s, matchInfo.getInt(s));
+						} catch (Exception e) {
+							try {stat = new Statistic(s, matchInfo.getBoolean(s));
+							} catch (Exception ex) {
+								stat = new Statistic(s, matchInfo.getString(s));
+							}
+						}
+						
+						t.statList.addStatistic(stat);
 					}
-					totalMatches++;
+					//TODO, Index all given statistics, and put them in the team :) with loop
+					
+					
+					
 				}
+			} catch (Exception e) {
+				System.out.println("Match data not found for " + t.name + " (" + t.number + ") at event " 
+						+ teamInformation.getJSONObject(i).getString("event_key") + " match " + teamInformation.getJSONObject(i).getInt("match_number"));
 			}
-			int size = stats.size();
-			for (int i = 0; i < size; i++) {
-				stats.add(i, stats.get(i)/totalMatches);
-				System.out.println(stats.size());
-			}
-			team.numericalStatistics = new ArrayList<>();
-			team.numericalStatistics.addAll(stats);
-			rankedTeams.add(team);
-			System.out.print(team.number + ", " + team.name + ",");
-			for (double d : team.numericalStatistics) {
-				System.out.print(formatDouble("%.3f", d) + ",");
-			}
-			System.out.print("\n");
-			stats.clear();
-			j++;
 		}
-		/*Collections.sort(rankedTeams, new Comparator<Team>() {
-	        @Override public int compare(Team t1, Team t2) {
-	            return (int) ((t1.number - t2.number)*1000); // Ascending
-	        }
-	    });*/
-		System.out.println("------------------------------------------------------------------------------------------------------------------");
-		System.out.print("TeamName");
-		for (String s : statistics) {
-			System.out.print(","+s);
-		}
-		for (Team t : rankedTeams) {
-			System.out.print(t.number + ", " + t.name + ",");
-			for (double d : t.numericalStatistics) {
-				System.out.print(formatDouble("%.3f", d) + ",");
-			}
-			System.out.print("\n");
-		}
-		/*System.out.println(statistic.toUpperCase());
-		int i = 1;
-		for (Team t : rankedTeams) {
-
-			t.rank = Double.parseDouble(String.format("%.3f", t.rank));
-			//System.out.print(t.number + ",");
-			//System.out.print(t.name + ",");
-			System.out.println(t.rank);
-			i++;
-		}*/
-		return rankedTeams;
+		
+		
+		
 	}
 	
 	public void getEventPredictions(String eventKey, int year) {
