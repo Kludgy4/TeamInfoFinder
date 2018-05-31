@@ -1,8 +1,13 @@
 package main;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+
+import javax.swing.JFileChooser;
+import javax.swing.JTextField;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,8 +28,12 @@ public class DataFinder {
 		
 		String[] potentialStats = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + exampleEvent + "/matches"))).
 				getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
+		ArrayList<Team> teams = new ArrayList<Team>();
+		ArrayList<String> statistics = new ArrayList<>();
 		
 		do {
+			teams.clear();
+			statistics.clear();
 			if (getString("Do you want to prescout a Team or an Event?", "Team", "Event").equals("Team")) {
 				getString("What is the number of the Team you wish to prescout?");
 				getMultipleStrings("What statistics do you want to prescout?", potentialStats);
@@ -34,10 +43,10 @@ public class DataFinder {
 				//Save the data as a CSV in the given location
 			} else {
 				String eventKey = getString("What is the key for the event you wish to prescout?");
-				ArrayList<Team> eventTeams = tba.getEventTeams(eventKey, yearToScout);
-				ArrayList<String> statistics = getMultipleStrings("What statistics do you want to prescout?", potentialStats);
+				teams = tba.getEventTeams(eventKey, yearToScout);
+				statistics = getMultipleStrings("What statistics do you want to prescout?", potentialStats);
 				
-				for (Team t : eventTeams) {
+				for (Team t : teams) {
 					tba.scoutTeamStatistics(t, yearToScout, statistics);
 				}
 				
@@ -47,6 +56,46 @@ public class DataFinder {
 				//Ask for where to save the data as a CSV
 				//Save the data as a CSV in the given location
 			}
+			System.out.println("Saving Information...");
+			/*JFileChooser chooser = new JFileChooser();
+			JTextField filename = new JTextField(), dir = new JTextField();
+			 //chooser.set
+			
+			if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+		        filename.setText(chooser.getSelectedFile().getName());
+		        dir.setText(chooser.getCurrentDirectory().toString());
+		       
+		    }
+			*/
+			try {
+				//FileWriter writer = new FileWriter(dir.getText() + filename.getText());
+				FileWriter writer = new FileWriter("C:\\Users\\Matthew\\Desktop\\Test.csv");
+				
+				writer.append(" ");
+				writer.append(",");
+				writer.append(" ");
+				writer.append(",");
+				for (String s : statistics) {
+					writer.append(s);
+					writer.append(',');
+				}
+				writer.append("\n");
+				
+				for (Team t : teams) {
+					writer.append(((Integer)t.number).toString());
+					writer.append(',');
+					writer.append(t.name);
+					writer.append(',');
+					for (Statistic s : t.statList.getStatistics()) {
+						writer.append(((Double)s.getAverage()).toString());
+						writer.append(',');
+					}
+					writer.append("\n");
+				}
+				
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {e.printStackTrace();}
 		} while (getString("Would you like to prescout more?", "Yes", "No").equals("Yes"));
 		reader.close();
 	}

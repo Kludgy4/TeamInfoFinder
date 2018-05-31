@@ -1,14 +1,16 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.OptionalDouble;
 
 public class Statistic {
 	
 	String name;
 	
-	private ArrayList<Integer> intStatistics;
-	private ArrayList<Boolean> boolStatistics;
-	private ArrayList<String> strStatistics;
+	public ArrayList<Integer> intStatistics = new ArrayList<Integer>();
+	public ArrayList<Boolean> boolStatistics = new ArrayList<Boolean>();
+	public ArrayList<String> strStatistics = new ArrayList<String>();
 	
 	public Statistic(String name) {
 		this.name = name;
@@ -29,28 +31,22 @@ public class Statistic {
 		strStatistics.add(statisticStr);
 	}
 	
-	public void addInt(int statisticInt) {
-		intStatistics.add(statisticInt);
+	public void addStat(Statistic stat) {
+		try {
+			intStatistics.add(stat.intStatistics.get(0));
+		} catch (Exception e) {
+			try {
+				boolStatistics.add(stat.boolStatistics.get(0));
+			} catch (Exception ex) {
+				strStatistics.add(stat.strStatistics.get(0));
+			}
+		}
 	}
 	
-	public void addBool(boolean statisticBool) {
-		boolStatistics.add(statisticBool);
-	}
-	
-	public void addStr(String statisticStr) {
-		strStatistics.add(statisticStr);
-	}
-	
-	public int getInt() {
-		return intStatistics.get(0);
-	}
-	
-	public boolean getBool() {
-		return boolStatistics.get(0);
-	}
-	
-	public String getStr() {
-		return strStatistics.get(0);
+	public double getAverage() {
+		int sum = 0;
+		for (int d : intStatistics) sum += d;
+		return 1.0d * sum / intStatistics.size();
 	}
 
 }

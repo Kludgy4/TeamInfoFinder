@@ -129,8 +129,8 @@ public class APIHandlerFRC extends APIHandler {
 		
 	}
 
-	public void scoutTeamStatistics(Team t, int year, ArrayList<String> statistics) {
-		String information = getInfo("/team/"+ t.teamKey + "/matches/" + year);
+	public void scoutTeamStatistics(Team scoutTeam, int year, ArrayList<String> statisticsToScout) {
+		String information = getInfo("/team/"+ scoutTeam.teamKey + "/matches/" + year);
 				
 		JSONArray teamInformation = new JSONArray(information);
 		for (int i = 0; i < teamInformation.length()-1; i++) {
@@ -138,30 +138,27 @@ public class APIHandlerFRC extends APIHandler {
 				if (teamInformation.getJSONObject(i).getString("comp_level").equals("qm")) {	
 					JSONArray blue = teamInformation.getJSONObject(i).getJSONObject("alliances").getJSONObject("blue").getJSONArray("team_keys");
 					String alliance;
-					if (blue.getString(0).equals(t.teamKey) || blue.getString(1).equals(t.teamKey) || blue.getString(2).equals(t.teamKey)) {
+					if (blue.getString(0).equals(scoutTeam.teamKey) || blue.getString(1).equals(scoutTeam.teamKey) || blue.getString(2).equals(scoutTeam.teamKey)) {
 						alliance = "blue";
 					} else {alliance = "red";}
 					JSONObject matchInfo = teamInformation.getJSONObject(i).getJSONObject("score_breakdown").getJSONObject(alliance);
 					
-					for (String s : statistics) {
-						Statistic stat;
-						try {stat = new Statistic(s, matchInfo.getInt(s));
+					Statistic stat;
+					for (String scoutStat : statisticsToScout) {
+						try {
+							stat = new Statistic(scoutStat, matchInfo.getInt(scoutStat));
 						} catch (Exception e) {
-							try {stat = new Statistic(s, matchInfo.getBoolean(s));
+							try {
+								stat = new Statistic(scoutStat, matchInfo.getBoolean(scoutStat));
 							} catch (Exception ex) {
-								stat = new Statistic(s, matchInfo.getString(s));
+								stat = new Statistic(scoutStat, matchInfo.getString(scoutStat));
 							}
 						}
-						
-						t.statList.addStatistic(stat);
+							scoutTeam.statList.addStatistic(stat);
 					}
-					//TODO, Index all given statistics, and put them in the team :) with loop
-					
-					
-					
 				}
 			} catch (Exception e) {
-				System.out.println("Match data not found for " + t.name + " (" + t.number + ") at event " 
+				System.out.println("Match data not found for " + scoutTeam.name + " (" + scoutTeam.number + ") at event " 
 						+ teamInformation.getJSONObject(i).getString("event_key") + " match " + teamInformation.getJSONObject(i).getInt("match_number"));
 			}
 		}
