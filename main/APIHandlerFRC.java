@@ -80,8 +80,19 @@ public class APIHandlerFRC extends APIHandler {
 	            return t1.number - t2.number; // Ascending
 	        }
 	    });
-		System.out.println(teams.size() + " teams found at " + eventKey + "!");
 		return teams;		
+	}
+	
+	public Team getTeam(String key) {
+
+		JSONObject information = new JSONObject(getInfo("/team/" + key));
+		
+		//TODO Remove unneeded variables like those below
+	    String teamKey = information.getString("key");
+	    int number = information.getInt("team_number");
+	    String name = information.getString("nickname");
+	    int rookieYear = information.getInt("rookie_year");
+		return new Team(teamKey, number, name, rookieYear);		
 	}
 	
 	/**
@@ -130,9 +141,13 @@ public class APIHandlerFRC extends APIHandler {
 	}
 
 	public void scoutTeamStatistics(Team scoutTeam, int year, ArrayList<String> statisticsToScout) {
+		
 		String information = getInfo("/team/"+ scoutTeam.teamKey + "/matches/" + year);
+		scoutTeam.statList.getStatistics().clear();
 				
 		JSONArray teamInformation = new JSONArray(information);
+		System.out.println("Processing stats for " + scoutTeam.name + " (" + scoutTeam.number + ")");
+		
 		for (int i = 0; i < teamInformation.length()-1; i++) {
 			try {
 				if (teamInformation.getJSONObject(i).getString("comp_level").equals("qm")) {	
@@ -154,17 +169,14 @@ public class APIHandlerFRC extends APIHandler {
 								stat = new Statistic(scoutStat, matchInfo.getString(scoutStat));
 							}
 						}
-							scoutTeam.statList.addStatistic(stat);
+						scoutTeam.statList.addStatistic(stat);
 					}
 				}
 			} catch (Exception e) {
-				System.out.println("Match data not found for " + scoutTeam.name + " (" + scoutTeam.number + ") at event " 
+				System.out.println("		Match data not found for " + scoutTeam.name + " (" + scoutTeam.number + ") at event " 
 						+ teamInformation.getJSONObject(i).getString("event_key") + " match " + teamInformation.getJSONObject(i).getInt("match_number"));
 			}
 		}
-		
-		
-		
 	}
 	
 	public void getEventPredictions(String eventKey, int year) {

@@ -24,37 +24,38 @@ public class DataFinder {
 		int yearToScout = Integer.parseInt(getString("What year would you like to scout?", "2015", "2016", "2017", "2018"));
 		
 		//TODO Make eventkey verification method
-		String exampleEvent = getString("What " + yearToScout + " event should be used for example statistics?");
+		String statPullEvent;
+		String[] potentialStats;
 		
-		String[] potentialStats = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + exampleEvent + "/matches"))).
-				getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
 		ArrayList<Team> teams = new ArrayList<Team>();
 		ArrayList<String> statistics = new ArrayList<>();
 		
 		do {
 			teams.clear();
 			statistics.clear();
-			if (getString("Do you want to prescout a Team or an Event?", "Team", "Event").equals("Team")) {
-				getString("What is the number of the Team you wish to prescout?");
-				getMultipleStrings("What statistics do you want to prescout?", potentialStats);
-				//Go through every qualification match they played this season and average their score for selected stats
-				//Prints data pulling status while doing above
-				//Ask for where to save the data as a CSV
-				//Save the data as a CSV in the given location
+			if (getString("Do you want to prescout Teams or an Event?", "Teams", "Event").equals("Teams")) {
+				statPullEvent = getString("What " + yearToScout + " event should be used for example statistics?");
+				
+				potentialStats = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + statPullEvent + "/matches"))).
+						getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
+				
+				teams.add(tba.getTeam("frc" + getString("What is the number of the Team you wish to prescout?")));
+				
+				statistics = getMultipleStrings("What statistics do you want to prescout?", potentialStats);
+				
+				tba.scoutTeamStatistics(teams.get(0), yearToScout, statistics);
+				
 			} else {
 				String eventKey = getString("What is the key for the event you wish to prescout?");
 				teams = tba.getEventTeams(eventKey, yearToScout);
+				potentialStats = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + eventKey + "/matches"))).
+						getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
+				
 				statistics = getMultipleStrings("What statistics do you want to prescout?", potentialStats);
 				
 				for (Team t : teams) {
 					tba.scoutTeamStatistics(t, yearToScout, statistics);
 				}
-				
-				//Go through every qualification match every team in this comp played this season and average their 
-				//score for selected stats
-				//Prints data pulling status while doing above
-				//Ask for where to save the data as a CSV
-				//Save the data as a CSV in the given location
 			}
 			System.out.println("Saving Information...");
 			/*JFileChooser chooser = new JFileChooser();
