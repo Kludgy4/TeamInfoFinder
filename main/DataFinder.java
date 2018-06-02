@@ -1,13 +1,13 @@
 package main;
 
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 
 import javax.swing.JFileChooser;
-import javax.swing.JTextField;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -34,7 +34,7 @@ public class DataFinder {
 			teams.clear();
 			statistics.clear();
 			if (getString("Do you want to prescout Teams or an Event?", "Teams", "Event").equals("Teams")) {
-				statPullEvent = getString("What " + yearToScout + " event should be used for example statistics?");
+				statPullEvent = getString("What " + yearToScout + " event should be used to get potential query statistics?");
 				
 				potentialStats = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + statPullEvent + "/matches"))).
 						getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
@@ -57,47 +57,51 @@ public class DataFinder {
 					tba.scoutTeamStatistics(t, yearToScout, statistics);
 				}
 			}
-			System.out.println("Saving Information...");
-			/*JFileChooser chooser = new JFileChooser();
-			JTextField filename = new JTextField(), dir = new JTextField();
-			 //chooser.set
+			System.out.println("Attempting to save data...");
+			boolean shouldTryAgain = false;
+			JFileChooser chooser;
+			String saveDirectory = "";
+			do {
+				shouldTryAgain = false;
+			    chooser = new JFileChooser();
+			    FileFilter filter = new FileNameExtensionFilter("CSV File","csv");
+			    chooser.setCurrentDirectory(new java.io.File("."));
+			    chooser.setDialogTitle("Save CSV");
+			    //chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			    chooser.setAcceptAllFileFilterUsed(false);
+			    
+			    chooser.setFileFilter(filter);
+			    
+			    if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) { 
+			       saveDirectory = chooser.getSelectedFile().toString() + ".csv";
+			    } else {
+			    	if (getString("Would you like to select a save location?", "Yes", "No").equals("No")) shouldTryAgain = false;
+			    	else {shouldTryAgain = true;}
+			    }
+			} while (shouldTryAgain);
 			
-			if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-		        filename.setText(chooser.getSelectedFile().getName());
-		        dir.setText(chooser.getCurrentDirectory().toString());
-		       
-		    }
-			*/
 			try {
-				//FileWriter writer = new FileWriter(dir.getText() + filename.getText());
-				FileWriter writer = new FileWriter("C:\\Users\\Matthew\\Desktop\\Test.csv");
+				FileWriter writer = new FileWriter(saveDirectory + "");
 				
-				writer.append(" ");
-				writer.append(",");
-				writer.append(" ");
-				writer.append(",");
+				writer.append("Number,Name,");
 				for (String s : statistics) {
-					writer.append(s);
-					writer.append(',');
+					writer.append(s + ",");
 				}
 				writer.append("\n");
 				
 				for (Team t : teams) {
-					writer.append(((Integer)t.number).toString());
-					writer.append(',');
-					writer.append(t.name);
-					writer.append(',');
+					writer.append(((Integer)t.number).toString() + ',' + t.name + ',');
 					for (Statistic s : t.statList.getStatistics()) {
-						writer.append(((Double)s.getAverage()).toString());
-						writer.append(',');
+						writer.append(((Double)s.getAverage()).toString() + ",");
 					}
 					writer.append("\n");
 				}
-				
-				writer.flush();
 				writer.close();
-			} catch (IOException e) {e.printStackTrace();}
-		} while (getString("Would you like to prescout more?", "Yes", "No").equals("Yes"));
+				System.out.println("Gathered data was successfully saved!");
+			} catch (Exception e) {
+				System.out.println("Gathered data was not saved");
+			}
+		} while (getString("Would you like to prescout again?", "Yes", "No").equals("Yes"));
 		reader.close();
 	}
 	

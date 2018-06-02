@@ -173,7 +173,7 @@ public class APIHandlerFRC extends APIHandler {
 					}
 				}
 			} catch (Exception e) {
-				System.out.println("		Match data not found for " + scoutTeam.name + " (" + scoutTeam.number + ") at event " 
+				System.out.println("	Some match data not found for " + scoutTeam.name + " (" + scoutTeam.number + ") at event " 
 						+ teamInformation.getJSONObject(i).getString("event_key") + " match " + teamInformation.getJSONObject(i).getInt("match_number"));
 			}
 		}
