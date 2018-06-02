@@ -1,6 +1,9 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Statistic {
 	
@@ -41,10 +44,42 @@ public class Statistic {
 		}
 	}
 	
-	public double getAverage() {
+	public double getAverage() throws Exception {
+		if (intStatistics.size() == 0) throw new Exception();
+		
 		int sum = 0;
 		for (int d : intStatistics) sum += d;
 		return 1.0d * sum / intStatistics.size();
+	}
+	
+	public boolean getModeBoolean() throws Exception {
+		if (boolStatistics.size() == 0) throw new Exception();
+		
+		if (Collections.frequency(boolStatistics, true) > Collections.frequency(boolStatistics, false)) {
+			return true;
+		} else {return false;}
+	}
+	
+	public ArrayList<String> getModeString() throws Exception {
+		if (strStatistics.size() == 0) throw new Exception();
+		
+		Map<String, Long> strOcurrences = 
+				  strStatistics.stream().collect(Collectors.groupingBy(w -> w, Collectors.counting()));
+		
+		ArrayList<String> modeEntries = new ArrayList<>();
+		long highestFreq = 0;
+		modeEntries.add(null);
+
+		for (Map.Entry<String, Long> entry : strOcurrences.entrySet()) {
+		    if (modeEntries.size() == 0 || entry.getValue().compareTo(highestFreq) > 0)  {
+		    	modeEntries.clear();
+		    	modeEntries.add(entry.getKey());
+		    	highestFreq = entry.getValue();
+		    } else if (entry.getValue().compareTo(highestFreq) == 0) {
+		    	modeEntries.add(entry.getKey());
+		    }
+		}
+		return modeEntries;
 	}
 
 }
