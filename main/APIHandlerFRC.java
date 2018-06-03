@@ -5,6 +5,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -15,17 +16,26 @@ public class APIHandlerFRC extends APIHandler {
 	
 	private static int imgNum = 1, videoNum = 1;
 	
+	/**
+	 * Handles The Blue Alliance (TBA) API Calls
+	 * @param apiURL
+	 * @param authKey
+	 */
 	public APIHandlerFRC(String apiURL, String authKey) {
 		super(apiURL, authKey);
 	}
 	
-	public void getEventTeamMedia(ArrayList<Team> teams, int year, String saveLocation) {
+	/**
+	 * Saves all team media logged on TBA to a given location
+	 * @param teams The teams whose media will be downloaded
+	 * @param year The year for which the media should be taken 
+	 * @param saveLocation The location to which the media should be saved
+	 */
+	public void getMediaTeams(ArrayList<Team> teams, int year, String saveLocation) {
 		for (Team team: teams) {
 			//Finds all team media info
 			String information = getInfo("/team/"+ team.teamKey + "/media/" + year);
 			JSONArray mediaInformation = new JSONArray(information);
-			
-			System.out.println(information);
 			
 			imgNum = 1;
 			videoNum = 1;
@@ -62,39 +72,6 @@ public class APIHandlerFRC extends APIHandler {
 		}
 	}
 	
-	public ArrayList<Team> getEventTeams(String eventKey, int year) {
-		String information = getInfo("/event/"+ year + eventKey+ "/teams");
-
-		JSONArray teamInformation = new JSONArray(information);
-		ArrayList<Team> teams = new ArrayList<>();
-		for (int i = 0; i < teamInformation.length(); i++) {
-		    String teamKey = teamInformation.getJSONObject(i).getString("key");
-		    int number = teamInformation.getJSONObject(i).getInt("team_number");
-		    String name = teamInformation.getJSONObject(i).getString("nickname");
-		    int rookieYear = teamInformation.getJSONObject(i).getInt("rookie_year");
-		    teams.add(new Team(teamKey, number, name, rookieYear));
-		}
-		
-		Collections.sort(teams, new Comparator<Team>() {
-	        @Override public int compare(Team t1, Team t2) {
-	            return t1.number - t2.number; // Ascending
-	        }
-	    });
-		return teams;		
-	}
-	
-	public Team getTeam(String key) {
-
-		JSONObject information = new JSONObject(getInfo("/team/" + key));
-		
-		//TODO Remove unneeded variables like those below
-	    String teamKey = information.getString("key");
-	    int number = information.getInt("team_number");
-	    String name = information.getString("nickname");
-	    int rookieYear = information.getInt("rookie_year");
-		return new Team(teamKey, number, name, rookieYear);		
-	}
-	
 	/**
 	 * Saves an image to a given path on a computer
 	 * @param imageURL The online URL of the image
@@ -124,23 +101,61 @@ public class APIHandlerFRC extends APIHandler {
         }
 	}
 	
-	public void getEventRankings(String eventKey, int year) {
-
-		String information = getInfo("/event/"+ year + eventKey+ "/rankings");
-			
-		JSONArray teamInformation = (new JSONObject(information)).getJSONArray("rankings");
-	
-		for (int i = 0; i < teamInformation.length(); i++) {		    
-			System.out.println(teamInformation.getJSONObject(i).getString("team_key") + " is " + 
-		    					teamInformation.getJSONObject(i).getInt("rank") + " with RP " + 
-		    					teamInformation.getJSONObject(i).getJSONArray("sort_orders").getFloat(0) + 
-		    					"(" +  teamInformation.getJSONObject(i).getInt("matches_played") + 
-		    					", " + teamInformation.getJSONObject(i).getJSONArray("extra_stats").getInt(0) + ")");
+	/**
+	 * Returns a list of teams who are competing at a given event
+	 * @param eventKey The key for the event to be checked
+	 * @param year The year for which this event should be checked
+	 * @return A list of Team objects who are competing at the given event
+	 */
+	public ArrayList<Team> getTeamsEvent(String eventKey, int year) {
+		JSONArray teamInformation = new JSONArray(getInfo("/event/"+ year + eventKey+ "/teams"));
+		ArrayList<Team> teams = new ArrayList<>();
+		
+		for (int i = 0; i < teamInformation.length(); i++) {
+		    teams.add(getTeam(teamInformation.getJSONObject(i).getString("key")));
 		}
 		
+		Collections.sort(teams, new Comparator<Team>() {
+	        @Override public int compare(Team t1, Team t2) {return t1.number - t2.number;}}); // Ascending
+		return teams;
+	}
+	
+	/**
+	 * Gets a team object given their teamKey
+	 * @param teamKey The key of the team
+	 * @return Team A team object representative of the team associated with the given key
+	 */
+	public Team getTeam(String teamKey) {
+
+		JSONObject information = new JSONObject(getInfo("/team/" + teamKey));
+		
+	    int number = information.getInt("team_number");
+	    String name = information.getString("nickname");
+	    int rookieYear = information.getInt("rookie_year");
+		return new Team(teamKey, number, name, rookieYear);		
+	}
+	
+	/**
+	 * Gets an array of strings whose names are representative of gettable statistics
+	 * @param yearToScout The year for which these statistics are gotten from
+	 * @param eventKey The event that these statistics should be pulled from
+	 * @return An array of strings whose names are representative of gettable statistics
+	 */
+	public String[] getStatistics(int yearToScout, String eventKey) {
+		String[] statArray = JSONObject.getNames((new JSONArray(getInfo("/event/"+ yearToScout + eventKey + "/matches"))).
+				getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
+		System.out.println("Sorting Statistics");
+		Arrays.sort(statArray);
+		return statArray;
 	}
 
-	public void scoutTeamStatistics(Team scoutTeam, int year, ArrayList<String> statisticsToScout) {
+	/**
+	 * Scouts a teams statistics and adds them to that Team
+	 * @param scoutTeam The team to be scouted
+	 * @param year The year for which this team should be scouted
+	 * @param statisticsToScout A list of strings representative of statistics that should be scouted
+	 */
+	public void scoutStatisticsTeam (Team scoutTeam, int year, ArrayList<String> statisticsToScout) {
 		
 		String information = getInfo("/team/"+ scoutTeam.teamKey + "/matches/" + year);
 		scoutTeam.statList.getStatistics().clear();
@@ -179,64 +194,16 @@ public class APIHandlerFRC extends APIHandler {
 		}
 	}
 	
-	public void getEventPredictions(String eventKey, int year) {
-		String information = getInfo("/event/"+ year + eventKey+ "/predictions");
-		//System.out.println(information);
-		
-		for (int i = 1; i <= 130; i++) {
-			JSONObject teamInformation = (new JSONObject(information).getJSONObject("match_predictions")
-					.getJSONObject("qual").getJSONObject(year+eventKey.toLowerCase()+"_qm"+i));
-			JSONObject redInfo = teamInformation.getJSONObject("red");
-			JSONObject blueInfo = teamInformation.getJSONObject("blue");
-			
-			System.out.println("---------------------------------------------------");
-			System.out.println("Qualification " + i + ": ");
-			
-			System.out.print("  Red: ");
-			double redScore = redInfo.getDouble("score");
-			System.out.println(redScore);
-			System.out.println("   Red Endgame Points: " + redInfo.getDouble("endgame_points"));
-			//System.out.println(redInfo);
-			System.out.print("  Blue: ");
-			double blueScore = blueInfo.getDouble("score");
-			System.out.println(blueScore);
-			System.out.println("   Blue Endgame Points: " + blueInfo.getDouble("endgame_points"));
-			
-			if (redScore > blueScore) System.out.println("Red should beat blue");
-			else System.out.println("Blue should beat red");
-		}
+	/**
+	 * Scouts a list of teams and adds their statistics to each Team object
+	 * @param scoutTeams The list of teams to be scouted
+	 * @param year The year for which this list of teams should be scouted
+	 * @param statisticsToScout A list of strings representative of statistics that should be scouted
+	 */
+	public void scoutStatisticsTeams(ArrayList<Team> scoutTeams, int year, ArrayList<String> statisticsToScout) {
+		for (Team t : scoutTeams) scoutStatisticsTeam(t, year, statisticsToScout);
 	}
 	
-	public void getEventMatchPredictions(String eventKey, int year, int matchNum, String matchType) {
-		String information = getInfo("/event/"+ year + eventKey+ "/predictions");
-		System.out.println(information);
-		
-		JSONObject teamInformation = (new JSONObject(information).getJSONObject("match_predictions")
-				.getJSONObject("qual").getJSONObject(year+eventKey.toLowerCase()+"_matchType"+matchNum));
-		JSONObject redInfo = teamInformation.getJSONObject("red");
-		JSONObject blueInfo = teamInformation.getJSONObject("blue");
-		
-		System.out.println("---------------------------------------------------");
-		System.out.println("Qualification " + matchNum + ": ");
-		
-		System.out.print("  Red: ");
-		double redScore = formatDouble(redInfo.getDouble("score"));
-		System.out.println(redScore);
-		System.out.println("    Auto Points: " + formatDouble(redInfo.getDouble("auto_points")));
-		System.out.println("    Endgame Points: " + formatDouble(redInfo.getDouble("endgame_points")));
-		System.out.println("    RP: Auto Quest - " + formatDouble(redInfo.getDouble("prob_auto_quest")*100) + "%");
-		System.out.println("        Boss - " + formatDouble(redInfo.getDouble("prob_face_boss")*100) + "%");
-		System.out.print("  Blue: ");
-		double blueScore = formatDouble(blueInfo.getDouble("score"));
-		System.out.println(blueScore);
-		System.out.println("    Auto Points: " + formatDouble(blueInfo.getDouble("auto_points")));
-		System.out.println("    Endgame Points: " + formatDouble(blueInfo.getDouble("endgame_points")));
-		System.out.println("    RP: Auto Quest - " + formatDouble(blueInfo.getDouble("prob_auto_quest")*100) + "%");
-		System.out.println("        Boss - " + formatDouble(blueInfo.getDouble("prob_face_boss")*100) + "%");
-		
-		if (redScore > blueScore) System.out.println("Red should beat blue");
-		else System.out.println("Blue should beat red");
-	}
 	
 	public double formatDouble(double d) {
 		return Double.parseDouble(String.format("%.4f", d));

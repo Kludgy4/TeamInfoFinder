@@ -2,6 +2,7 @@ package main;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -9,9 +10,6 @@ import java.util.Scanner;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class DataFinder {
 	
@@ -24,83 +22,40 @@ public class DataFinder {
 	public static void main(String[] args) {
 
 		int yearToScout = Integer.parseInt(getString("What year would you like to scout?", "2015", "2016", "2017", "2018"));
-		String[] potentialStatistics;
-		ArrayList<Team> selectedTeams = new ArrayList<Team>();
-		ArrayList<String> selectedStatistics = new ArrayList<>();
+		String[] statisticsPotential;
+		ArrayList<Team> teamsSelected = new ArrayList<Team>();
+		ArrayList<String> statisticsSelected = new ArrayList<>();
 		
 		do {
-			selectedTeams.clear();
-			selectedStatistics.clear();
+			teamsSelected.clear();
+			statisticsSelected.clear();
 			
 			//Gets information from the user and scouts selected teams
 			if (getString("Do you want to prescout Teams or an Event?", "Teams", "Event").equals("Teams")) {
-				for (String str : getMultipleStrings("What are the numbers of the Teams you wish to prescout?")) {
-					try {selectedTeams.add(tba.getTeam("frc" + str));}
-					catch(Exception e) {System.out.println("Team number " + str + " is invalid ");}
+				for (String teamNum : getMultipleStrings("What are the numbers of the Teams you wish to prescout?")) {
+					try {teamsSelected.add(tba.getTeam("frc" + teamNum));}
+					catch(Exception e) {System.out.println("Team number " + teamNum + " is invalid ");}
 				}
 				
-				potentialStatistics = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + 
-						getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?") +
-						"/matches"))).getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
-				selectedStatistics = getMultipleStrings("Which statistics do you want to prescout?", potentialStatistics);
+				statisticsPotential = tba.getStatistics(yearToScout, getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?"));
+				statisticsSelected = getMultipleStrings("Which statistics do you want to prescout?", statisticsPotential);
 				
-				for (Team team : selectedTeams) {
-					tba.scoutTeamStatistics(team, yearToScout, selectedStatistics);
-				}
-				
+				tba.scoutStatisticsTeams(teamsSelected, yearToScout, statisticsSelected);
 			} else {
+				//TODO Get event object instead
 				String eventKey = getString("What is the key for the event you wish to prescout?");
-				selectedTeams = tba.getEventTeams(eventKey, yearToScout);
+				teamsSelected = tba.getTeamsEvent(eventKey, yearToScout);
 				
-				potentialStatistics = JSONObject.getNames((new JSONArray(tba.getInfo("/event/"+ yearToScout + eventKey + "/matches"))).
-						getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
-				selectedStatistics = getMultipleStrings("What statistics do you want to prescout?", potentialStatistics);
+				statisticsPotential = tba.getStatistics(yearToScout, eventKey);
+				statisticsSelected = getMultipleStrings("What statistics do you want to prescout?", statisticsPotential);
 				
-				for (Team t : selectedTeams) {
-					tba.scoutTeamStatistics(t, yearToScout, selectedStatistics);
-				}
+				tba.scoutStatisticsTeams(teamsSelected, yearToScout, statisticsSelected);
 			}
 			
 			//Saves data to a selected location
 			System.out.println("Attempting to save data...");
-			
 			try {
-				FileWriter writer = new FileWriter(getFileSave("Comma-Separated-Values File", "csv"));
-				
-				writer.append("Number,Name,");
-				for (String s : selectedStatistics) {
-					writer.append(s + ",");
-				}
-				writer.append("\n");
-				
-				for (Team t : selectedTeams) {
-					writer.append(((Integer)t.number).toString() + ',' + t.name + ',');
-					
-					for (Statistic s : t.statList.getStatistics()) {
-						String statistic = "";
-						try {
-							statistic = ((Double)s.getAverage()).toString();
-						} catch (Exception e) {
-							try {
-								statistic = ((Boolean)s.getModeBoolean()).toString();
-							} catch (Exception ex) {
-								ArrayList<String> modeStrings = s.getModeString();
-								if (modeStrings.size() > 1) {
-									for (String st : s.getModeString()) {
-										statistic = statistic + "/" + st;
-									}
-								} else {
-									statistic = modeStrings.get(0);
-								}
-								
-								
-							}
-						}
-						writer.append(statistic + ',');
-					}
-					writer.append("\n");
-				}
-				writer.close();
+				saveStatistics(statisticsSelected, teamsSelected);
 				System.out.println("Data was successfully saved!");
 			} catch (Exception e) {
 				System.out.println("Data was not successfully saved");
@@ -109,40 +64,30 @@ public class DataFinder {
 		reader.close();
 	}
 	
-	public static String getString(String msg, String... options) {
-		String str;
-		if (options.length != 0) {
-			ArrayList<String> optionsList = new ArrayList<String>();
-			optionsList.addAll(Arrays.asList(options));
-			do {
-				System.out.print(msg + " - " + "Respond with one of the following options: ");
-				int iterator = 4;
-				for (String o : optionsList) {
-					if (optionsList.indexOf(o) != optionsList.size()-1 && iterator % 4 == 0) {
-						System.out.println("");
-						System.out.print(o + ", ");
-					} else if (optionsList.indexOf(o) != optionsList.size()-1) {
-						System.out.print(o + ", ");
-					} else {
-						System.out.println(o);
-					}
-					iterator++;
-				}
-				str = reader.nextLine();
-				if (!optionsList.contains(str)) System.out.println("This input is an invalid response. Please respond to the question with a given option.");
-			} while (!optionsList.contains(str));
-		} else {str = reader.nextLine();}
-
-		return str;
-	}
-	
 	public static String getString(String msg) {
 		System.out.println(msg);
 		return reader.nextLine();
 	}
 	
+	public static String getString(String msg, String... options) {
+		String stringInput;
+		if (options.length != 0) {
+			ArrayList<String> optionsList = new ArrayList<String>();
+			optionsList.addAll(Arrays.asList(options));
+			
+			do {
+				System.out.print(msg + " - " + "Respond with one of the following options: ");
+				printOptions(optionsList, 4);
+				stringInput = reader.nextLine();
+				if (!optionsList.contains(stringInput)) System.out.println("This input is an invalid response. Please respond to the question with a given option.");
+			} while (!optionsList.contains(stringInput));
+			
+		} else {stringInput = reader.nextLine();}
+		return stringInput;
+	}
+	
 	public static ArrayList<String> getMultipleStrings(String msg, String... options) {
-		String str;
+		String stringInput;
 		ArrayList<String> selectedOptions = new ArrayList<>();
 		
 		if (options.length != 0) {
@@ -150,50 +95,58 @@ public class DataFinder {
 			optionsList.addAll(Arrays.asList(options));
 			
 			System.out.print(msg + "\n" + "Respond with the following options and enter nothing when done: ");
-			int iterator = 4;
-			for (String o : optionsList) {
-				if (optionsList.indexOf(o) != optionsList.size()-1 && iterator % 4 == 0) {
-					System.out.println("");
-					System.out.print(o + ", ");
-				} else if (optionsList.indexOf(o) != optionsList.size()-1) {
-					System.out.print(o + ", ");
-				} else {
-					System.out.println(o);
-				}
-				iterator++;
-			}
+			printOptions(optionsList, 4);
 			
 			do {
-				str = reader.nextLine();
-				if (!optionsList.contains(str) && !str.equals("") && !selectedOptions.contains(str)) {
+				stringInput = reader.nextLine();
+				if (stringInput.equals("all")) {
+					selectedOptions.addAll(optionsList);
+					System.out.println("Selected Options: " + selectedOptions.toString());
+					break;
+				} else if (!optionsList.contains(stringInput) && !stringInput.equals("") && !selectedOptions.contains(stringInput)) {
 					System.out.println("Please respond to the question with a given option.");
-				} else if (!str.equals("")) {
-					selectedOptions.add(str);
+				} else if (!stringInput.equals("")) {
+					selectedOptions.add(stringInput);
 					System.out.println("Selected Options: " + selectedOptions.toString());
 				}
 				if (optionsList.size() == 0) {System.out.println("Please enter at least one statistic");}
-			} while (!str.equals("") || selectedOptions.size() == 0);
-		} else {str = reader.nextLine();}
+			} while (!stringInput.equals("") || selectedOptions.size() == 0);
+		} else {stringInput = reader.nextLine();}
 
 		return selectedOptions;
 	}
 	
 	public static ArrayList<String> getMultipleStrings(String msg) {
 		System.out.println(msg + "\n" + "Enter nothing when done");
-		String str = "";
-		ArrayList<String> inputStrings = new ArrayList<>();
+		String stringInput = "";
+		ArrayList<String> stringsInput = new ArrayList<>();
 		
 		do {
-			str = reader.nextLine();
-			if (!str.equals("") && !inputStrings.contains(str) && isInteger(str)) {
-				inputStrings.add(str);
-				System.out.println("Added Statistics: " + inputStrings.toString());
+			stringInput = reader.nextLine();
+			if (!stringInput.equals("") && !stringsInput.contains(stringInput) && isInteger(stringInput)) {
+				stringsInput.add(stringInput);
+				System.out.println("Added Strings: " + stringsInput.toString());
 			} 
-			if (inputStrings.size() == 0 ) {System.out.println("Please enter at least statistic");}
-			if (!isInteger(str) && !str.equals("")) {System.out.println("Please enter a number");}
-		} while (!str.equals("") || inputStrings.size() == 0);
+			if (stringsInput.size() == 0 ) {System.out.println("Please enter at least statistic");}
+			if (!isInteger(stringInput) && !stringInput.equals("")) {System.out.println("Please enter a number");}
+		} while (!stringInput.equals("") || stringsInput.size() == 0);
 		
-		return inputStrings;
+		return stringsInput;
+	}
+	
+	public static void printOptions(ArrayList<String> optionsList, int optionsPerLine) {
+		int iterator = optionsPerLine;
+		for (String option : optionsList) {
+			if (optionsList.indexOf(option) != optionsList.size()-1 && iterator % optionsPerLine == 0) {
+				System.out.println("");
+				System.out.print(option + ", ");
+			} else if (optionsList.indexOf(option) != optionsList.size()-1) {
+				System.out.print(option + ", ");
+			} else {
+				System.out.println(option);
+			}
+			iterator++;
+		}
 	}
 	
 	public static boolean isInteger(String s) {
@@ -230,6 +183,36 @@ public class DataFinder {
 		} while (shouldTryAgain);
 		
 		return new File(saveDirectory);
+	}
+	
+	public static void saveStatistics(ArrayList<String> statistics, ArrayList<Team> teams) throws Exception {
+		FileWriter writer = new FileWriter(getFileSave("Comma-Separated-Values File", "csv"));
+		
+		writer.append("Number,Name,");
+		for (String s : statistics) writer.append(s + ",");
+		writer.append("\n");
+		
+		for (Team team : teams) {
+			writer.append(team.number + ",");
+			writer.append(team.name + ",");
+			
+			for (Statistic s : team.statList.getStatistics()) {
+				String statistic = "";
+				try {statistic = ((Double)s.getAverage()).toString();} 
+				catch (Exception e) {
+					try {statistic = ((Boolean)s.getModeBoolean()).toString();} 
+					catch (Exception ex) {
+						ArrayList<String> modeStrings = s.getModeString();
+						if (modeStrings.size() > 1) for (String st : s.getModeString()) statistic = statistic + "/" + st;
+						else statistic = modeStrings.get(0);
+					}
+				}
+				writer.append(statistic + ',');
+			}
+			writer.append("\n");
+		}
+		writer.flush();
+		writer.close();
 	}
 
 }
