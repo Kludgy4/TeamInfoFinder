@@ -2,7 +2,6 @@ package main;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -64,11 +63,22 @@ public class DataFinder {
 		reader.close();
 	}
 	
+	/**
+	 * Gets the next string entered by the user
+	 * @param msg The message to be printed to tell the user what to enter
+	 * @return The next string entered by the user
+	 */
 	public static String getString(String msg) {
 		System.out.println(msg);
 		return reader.nextLine();
 	}
 	
+	/**
+	 * Gets the next string entered by the user out of a list of options
+	 * @param msg The message to be printed to tell the user what to enter
+	 * @param options A list of string options that the user can choose from
+	 * @return A string option chosen by the user
+	 */
 	public static String getString(String msg, String... options) {
 		String stringInput;
 		if (options.length != 0) {
@@ -86,6 +96,12 @@ public class DataFinder {
 		return stringInput;
 	}
 	
+	/**
+	 * Gets strings from the user until they enter an empty string
+	 * @param msg The message to be printed to tell the user what to enter
+	 * @param options A list of string options that the user can choose from
+	 * @return An array of string options chosen by the user
+	 */
 	public static ArrayList<String> getMultipleStrings(String msg, String... options) {
 		String stringInput;
 		ArrayList<String> selectedOptions = new ArrayList<>();
@@ -116,6 +132,11 @@ public class DataFinder {
 		return selectedOptions;
 	}
 	
+	/**
+	 * Gets strings from the user until they enter an empty string
+	 * @param msg The message to be printed to tell the user what to enter
+	 * @return An array of strings entered by the user
+	 */
 	public static ArrayList<String> getMultipleStrings(String msg) {
 		System.out.println(msg + "\n" + "Enter nothing when done");
 		String stringInput = "";
@@ -134,6 +155,11 @@ public class DataFinder {
 		return stringsInput;
 	}
 	
+	/**
+	 * Prints a list of strings separated by commas
+	 * @param optionsList The list of strings to be printed
+	 * @param optionsPerLine The amount of strings to be printed on each line
+	 */
 	public static void printOptions(ArrayList<String> optionsList, int optionsPerLine) {
 		int iterator = optionsPerLine;
 		for (String option : optionsList) {
@@ -149,18 +175,29 @@ public class DataFinder {
 		}
 	}
 	
-	public static boolean isInteger(String s) {
-	    if(s.isEmpty()) return false;
-	    for(int i = 0; i < s.length(); i++) {
-	        if(i == 0 && s.charAt(i) == '-') {
-	            if(s.length() == 1) return false;
+	/**
+	 * Checks whether or not an input string is an Integer
+	 * @param str The string to check whether it is an integer
+	 * @return A boolean represnting whether or not this string is an integer
+	 */
+	public static boolean isInteger(String str) {
+	    if(str.isEmpty()) return false;
+	    for(int i = 0; i < str.length(); i++) {
+	        if(i == 0 && str.charAt(i) == '-') {
+	            if(str.length() == 1) return false;
 	            else continue;
 	        }
-	        if(Character.digit(s.charAt(i),10) < 0) return false;
+	        if(Character.digit(str.charAt(i),10) < 0) return false;
 	    }
 	    return true;
 	}
 	
+	/**
+	 * Gets the location of a file that the user enters via a prompt
+	 * @param fileExtensionDescription A description of the file extension that the file will be saved using
+	 * @param fileExtension The file extension that the file will be saved using
+	 * @return A File object representative of the save location
+	 */
 	public static File getFileSave(String fileExtensionDescription, String fileExtension) {
 		boolean shouldTryAgain = false;
 		JFileChooser chooser;
@@ -185,6 +222,12 @@ public class DataFinder {
 		return new File(saveDirectory);
 	}
 	
+	/**
+	 * Saves a list of statistics to a given file
+	 * @param statistics A list of string statistics to be saved
+	 * @param teams A list of teams with statistics stored in them that should be saved to a csv
+	 * @throws Exception Thrown if the selected file does not exist
+	 */
 	public static void saveStatistics(ArrayList<String> statistics, ArrayList<Team> teams) throws Exception {
 		FileWriter writer = new FileWriter(getFileSave("Comma-Separated-Values File", "csv"));
 		
@@ -196,7 +239,7 @@ public class DataFinder {
 			writer.append(team.number + ",");
 			writer.append(team.name + ",");
 			
-			for (Statistic s : team.statList.getStatistics()) {
+			for (Statistic s : team.statList.statistics) {
 				String statistic = "";
 				try {statistic = ((Double)s.getAverage()).toString();} 
 				catch (Exception e) {

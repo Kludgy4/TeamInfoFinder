@@ -13,37 +13,57 @@ public class Statistic {
 	public ArrayList<Boolean> boolStatistics = new ArrayList<Boolean>();
 	public ArrayList<String> strStatistics = new ArrayList<String>();
 	
-	public Statistic(String name) {
-		this.name = name;
-	}
-	
+	/**
+	 * An integer constructor for the statistic object
+	 * @param name The name of the statistic
+	 * @param statisticInt The integer value to add to the integer statistics
+	 */
 	public Statistic(String name, int statisticInt) {
 		this.name = name;
 		intStatistics.add(statisticInt);
 	}
 	
+	/**
+	 * An boolean constructor for the statistic object
+	 * @param name The name of the statistic
+	 * @param statisticBool The boolean value to add to the boolean statistics
+	 */
 	public Statistic(String name, boolean statisticBool) {
 		this.name = name;
 		boolStatistics.add(statisticBool);
 	}
 	
+	/**
+	 * A string constructor for the statistic object
+	 * @param name The name of the statistic
+	 * @param statisticStr The string value to add to the string statistics
+	 */
 	public Statistic(String name, String statisticStr) {
 		this.name = name;
 		strStatistics.add(statisticStr);
 	}
 	
+	/**
+	 * Adds two statistics together
+	 * @param stat The statistic to add to this statistic
+	 */
 	public void addStat(Statistic stat) {
 		try {
-			intStatistics.add(stat.intStatistics.get(0));
+			intStatistics.addAll(stat.intStatistics);
 		} catch (Exception e) {
 			try {
-				boolStatistics.add(stat.boolStatistics.get(0));
+				boolStatistics.addAll(stat.boolStatistics);
 			} catch (Exception ex) {
-				strStatistics.add(stat.strStatistics.get(0));
+				strStatistics.addAll(stat.strStatistics);
 			}
 		}
 	}
 	
+	/**
+	 * Gets the average of this statistic
+	 * @return The double average of this statistic
+	 * @throws Exception
+	 */
 	public double getAverage() throws Exception {
 		if (intStatistics.size() == 0) throw new Exception();
 		
@@ -52,6 +72,11 @@ public class Statistic {
 		return 1.0d * sum / intStatistics.size();
 	}
 	
+	/**
+	 * Gets the average of this statistic
+	 * @return The boolean average of this statistic
+	 * @throws Exception
+	 */
 	public boolean getModeBoolean() throws Exception {
 		if (boolStatistics.size() == 0) throw new Exception();
 		
@@ -60,6 +85,11 @@ public class Statistic {
 		} else {return false;}
 	}
 	
+	/**
+	 * Gets the mode string of this statistic
+	 * @return The string average of this statistic
+	 * @throws Exception
+	 */
 	public ArrayList<String> getModeString() throws Exception {
 		if (strStatistics.size() == 0) throw new Exception();
 		

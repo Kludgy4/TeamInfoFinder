@@ -158,7 +158,7 @@ public class APIHandlerFRC extends APIHandler {
 	public void scoutStatisticsTeam (Team scoutTeam, int year, ArrayList<String> statisticsToScout) {
 		
 		String information = getInfo("/team/"+ scoutTeam.teamKey + "/matches/" + year);
-		scoutTeam.statList.getStatistics().clear();
+		scoutTeam.statList.statistics.clear();
 				
 		JSONArray teamInformation = new JSONArray(information);
 		System.out.println("Processing stats for " + scoutTeam.name + " (" + scoutTeam.number + ")");
