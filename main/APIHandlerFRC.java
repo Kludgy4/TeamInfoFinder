@@ -111,10 +111,10 @@ public class APIHandlerFRC extends APIHandler {
 		JSONArray teamInformation = new JSONArray(getInfo("/event/"+ year + eventKey+ "/teams"));
 		ArrayList<Team> teams = new ArrayList<>();
 		
-		for (int i = 0; i < teamInformation.length(); i++) {
-		    teams.add(getTeam(teamInformation.getJSONObject(i).getString("key")));
-		}
+		System.out.println("Getting teams");
+		for (int i = 0; i < teamInformation.length(); i++) teams.add(getTeam(teamInformation.getJSONObject(i).getString("key")));
 		
+		System.out.println("Sorting teams");
 		Collections.sort(teams, new Comparator<Team>() {
 	        @Override public int compare(Team t1, Team t2) {return t1.number - t2.number;}}); // Ascending
 		return teams;
@@ -142,9 +142,10 @@ public class APIHandlerFRC extends APIHandler {
 	 * @return An array of strings whose names are representative of gettable statistics
 	 */
 	public String[] getStatistics(int yearToScout, String eventKey) {
+		
 		String[] statArray = JSONObject.getNames((new JSONArray(getInfo("/event/"+ yearToScout + eventKey + "/matches"))).
 				getJSONObject(0).getJSONObject("score_breakdown").getJSONObject("red"));
-		System.out.println("Sorting Statistics");
+		System.out.println("\n" + "Getting statistics");
 		Arrays.sort(statArray);
 		return statArray;
 	}

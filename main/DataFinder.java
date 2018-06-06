@@ -10,6 +10,8 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.json.JSONException;
+
 public class DataFinder {
 	
 	public static Scanner reader = new Scanner(System.in);
@@ -36,16 +38,31 @@ public class DataFinder {
 					catch(Exception e) {System.out.println("Team number " + teamNum + " is invalid ");}
 				}
 				
-				statisticsPotential = tba.getStatistics(yearToScout, getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?"));
+				do {try {
+					String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
+					statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
+					break;
+				} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
+			} while(true);
 				statisticsSelected = getMultipleStrings("Which statistics do you want to prescout?", statisticsPotential);
 				
 				tba.scoutStatisticsTeams(teamsSelected, yearToScout, statisticsSelected);
 			} else {
-				//TODO Get event object instead
-				String eventKey = getString("What is the key for the event you wish to prescout?");
-				teamsSelected = tba.getTeamsEvent(eventKey, yearToScout);
+				String eventKey;
+				do {try {
+						eventKey = getString("What is the key for the event you wish to prescout?");
+						teamsSelected = tba.getTeamsEvent(eventKey, yearToScout);
+						break;
+					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
+				} while(true);
 				
-				statisticsPotential = tba.getStatistics(yearToScout, eventKey);
+				do {try {
+						String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
+						statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
+						break;
+					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
+				} while(true);
+				
 				statisticsSelected = getMultipleStrings("What statistics do you want to prescout?", statisticsPotential);
 				
 				tba.scoutStatisticsTeams(teamsSelected, yearToScout, statisticsSelected);
@@ -89,9 +106,10 @@ public class DataFinder {
 				System.out.print(msg + " - " + "Respond with one of the following options: ");
 				printOptions(optionsList, 4);
 				stringInput = reader.nextLine();
-				if (!optionsList.contains(stringInput)) System.out.println("This input is an invalid response. Please respond to the question with a given option.");
-			} while (!optionsList.contains(stringInput));
-			
+				if (!inArray(stringInput, optionsList)) System.out.println("This input is an invalid response. Please respond to the question with a given option.");
+			} while (!inArray(stringInput, optionsList));
+			stringInput = stringInArray(stringInput, optionsList);
+			System.out.println("Selected " + stringInput);
 		} else {stringInput = reader.nextLine();}
 		return stringInput;
 	}
@@ -119,10 +137,14 @@ public class DataFinder {
 					selectedOptions.addAll(optionsList);
 					System.out.println("Selected Options: " + selectedOptions.toString());
 					break;
-				} else if (!optionsList.contains(stringInput) && !stringInput.equals("") && !selectedOptions.contains(stringInput)) {
+				} else if (!inArray(stringInput, optionsList) && !stringInput.equals("") && !inArray(stringInput, selectedOptions)) {
 					System.out.println("Please respond to the question with a given option.");
 				} else if (!stringInput.equals("")) {
-					selectedOptions.add(stringInput);
+					for (String str : stringsInArray(stringInput, optionsList)) {
+						if (!selectedOptions.contains(str)) {
+							selectedOptions.add(str);
+						}
+					}
 					System.out.println("Selected Options: " + selectedOptions.toString());
 				}
 				if (optionsList.size() == 0) {System.out.println("Please enter at least one statistic");}
@@ -144,7 +166,7 @@ public class DataFinder {
 		
 		do {
 			stringInput = reader.nextLine();
-			if (!stringInput.equals("") && !stringsInput.contains(stringInput) && isInteger(stringInput)) {
+			if (!stringInput.equals("") && !inArray(stringInput, stringsInput) && isInteger(stringInput)) {
 				stringsInput.add(stringInput);
 				System.out.println("Added Strings: " + stringsInput.toString());
 			} 
@@ -220,6 +242,34 @@ public class DataFinder {
 		} while (shouldTryAgain);
 		
 		return new File(saveDirectory);
+	}
+	
+	public static boolean inArray(String str, ArrayList<String> arr) {
+		for (String s : arr) {
+			try {
+				if (s.substring(0, str.length()).toLowerCase().contains(str.toLowerCase())) return true;
+			} catch (StringIndexOutOfBoundsException e) {}
+		}
+		return false;
+	}
+	
+	public static String stringInArray(String str, ArrayList<String> arr) {
+		for (String s : arr) {
+			try {
+				if (s.substring(0, str.length()).toLowerCase().contains(str.toLowerCase())) return s;
+			} catch (StringIndexOutOfBoundsException e) {}
+		}
+		return "";
+	}
+	
+	public static ArrayList<String> stringsInArray(String str, ArrayList<String> arr) {
+		ArrayList<String> contained = new ArrayList<>();
+		for (String s : arr) {
+			try {
+				if (s.substring(0, str.length()).toLowerCase().contains(str.toLowerCase())) contained.add(s);
+			} catch (StringIndexOutOfBoundsException e) {}
+		}
+		return contained;
 	}
 	
 	/**
