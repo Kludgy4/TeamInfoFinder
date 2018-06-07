@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -20,8 +21,9 @@ public class DataFinder {
 			"http://www.thebluealliance.com/api/v3", 
 			"?X-TBA-Auth-Key=bwidXGDgsZNrUbUIYG9zrLYfubC14liNqFwshbbVsrBRzAvMprB8MmLfyisKwDBJ");
 	
-	public static void main(String[] args) {
-
+	public static void main(String[] args) throws InterruptedException {
+		checkInternetConnection();
+		
 		int yearToScout = Integer.parseInt(getString("What year would you like to scout?", "2015", "2016", "2017", "2018"));
 		String[] statisticsPotential;
 		ArrayList<Team> teamsSelected = new ArrayList<Team>();
@@ -34,34 +36,38 @@ public class DataFinder {
 			//Gets information from the user and scouts selected teams
 			if (getString("Do you want to prescout Teams or an Event?", "Teams", "Event").equals("Teams")) {
 				for (String teamNum : getMultipleStrings("What are the numbers of the Teams you wish to prescout?")) {
-					try {teamsSelected.add(tba.getTeam("frc" + teamNum));}
-					catch(Exception e) {System.out.println("Team number " + teamNum + " is invalid ");}
+					try {
+						teamsSelected.add(tba.getTeam("frc" + teamNum));
+					} catch(JSONException ex) {System.out.println("Team number " + teamNum + " is invalid ");}
 				}
 				
 				do {try {
 					String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
 					statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
 					break;
-				} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
-			} while(true);
+					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
+				} while(true);
 				statisticsSelected = getMultipleStrings("Which statistics do you want to prescout?", statisticsPotential);
 				
 				tba.scoutStatisticsTeams(teamsSelected, yearToScout, statisticsSelected);
+				
 			} else {
 				String eventKey;
 				do {try {
 						eventKey = getString("What is the key for the event you wish to prescout?");
 						teamsSelected = tba.getTeamsEvent(eventKey, yearToScout);
 						break;
-					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
-				} while(true);
+					} catch (JSONException e) {
+						System.out.println("That event key is not valid. Please get the key from TBA");
+				}} while(true);
 				
 				do {try {
 						String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
 						statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
 						break;
-					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
-				} while(true);
+					} catch (JSONException e) {
+						System.out.println("That event key is not valid. Please get the key from TBA");
+				}} while(true);
 				
 				statisticsSelected = getMultipleStrings("What statistics do you want to prescout?", statisticsPotential);
 				
@@ -73,9 +79,7 @@ public class DataFinder {
 			try {
 				saveStatistics(statisticsSelected, teamsSelected);
 				System.out.println("Data was successfully saved!");
-			} catch (Exception e) {
-				System.out.println("Data was not successfully saved");
-			}
+			} catch (Exception e) {System.out.println("Data was not successfully saved");}
 		} while (getString("Would you like to prescout again?", "Yes", "No").equals("Yes"));
 		reader.close();
 	}
@@ -244,6 +248,12 @@ public class DataFinder {
 		return new File(saveDirectory);
 	}
 	
+	/**
+	 * Checks if a case-insensitive sub-string of the strings in the array is the same as an input string
+	 * @param str The string to check if a case-insensitive sub-string of it is in the array
+	 * @param arr The array to check for sub-strings
+	 * @return A boolean indicating whether or not the string is present in the array
+	 */
 	public static boolean inArray(String str, ArrayList<String> arr) {
 		for (String s : arr) {
 			try {
@@ -253,6 +263,12 @@ public class DataFinder {
 		return false;
 	}
 	
+	/**
+	 * Gets a string from a given array, which contains a sub-string equal to the given string
+	 * @param str The string to check if it is contained in the array
+	 * @param arr The array to check for sub-strings
+	 * @return A string from the array representative of the given string
+	 */
 	public static String stringInArray(String str, ArrayList<String> arr) {
 		for (String s : arr) {
 			try {
@@ -262,6 +278,12 @@ public class DataFinder {
 		return "";
 	}
 	
+	/**
+	 * Gets strings from a given array, which contain a sub-string equal to the given string
+	 * @param str The string to check if it is contained in the array
+	 * @param arr The array to check for sub-strings
+	 * @return An array of strings from the array representative of the given string
+	 */
 	public static ArrayList<String> stringsInArray(String str, ArrayList<String> arr) {
 		ArrayList<String> contained = new ArrayList<>();
 		for (String s : arr) {
@@ -306,6 +328,22 @@ public class DataFinder {
 		}
 		writer.flush();
 		writer.close();
+	}
+	
+	/**
+	 * Stalls the program running until one is connected to the internet
+	 * @throws InterruptedException Thrown if the program sleeping is somehow interrupted
+	 */
+	public static void checkInternetConnection() throws InterruptedException {
+		int timeToWait1 = 2, timeToWait2 = 3, timeToWait3 = 5;
+		while(!tba.checkConnection("/status")) {
+			System.out.println("Please connect to the internet, retrying in " + timeToWait3 + " seconds");
+			TimeUnit.SECONDS.sleep(timeToWait3);
+			timeToWait1 = timeToWait2;
+			timeToWait2 = timeToWait3;
+			timeToWait3 = timeToWait1 + timeToWait2;
+			System.out.println();
+		}
 	}
 
 }

@@ -31,9 +31,28 @@ public class APIHandler {
 	      .build();
 			Response response;
 		
+			try {
+				response = client.newCall(request).execute();
+				return response.body().string();
+			} catch (IOException e) {
+				System.out.println("Unable to connect to the API");
+				return "";
+			}
+	}
+	
+	/**
+	 * Checks if the API connection is valid
+	 * @param url The url to be used to check if the API is up
+	 * @return Whether or not the connection is currently valid
+	 */
+	public boolean checkConnection(String url) {
+		Request request = new Request.Builder().url(apiURL + url + authKey).build();
 		try {
-			response = client.newCall(request).execute();
-			return response.body().string();
-		} catch (IOException e) {e.printStackTrace();return e.getStackTrace().toString();}
+			client.newCall(request).execute();
+			return true;
+		} catch (IOException e) {
+			System.out.println("Unable to connect to the API");
+			return false;
+		}
 	}
 }
