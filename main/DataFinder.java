@@ -42,7 +42,7 @@ public class DataFinder {
 				}
 				
 				do {try {
-					String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
+					String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?").toLowerCase();
 					statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
 					break;
 					} catch (JSONException e) {System.out.println("That event key is not valid. Please get the key from TBA");};
@@ -54,7 +54,7 @@ public class DataFinder {
 			} else {
 				String eventKey;
 				do {try {
-						eventKey = getString("What is the key for the event you wish to prescout?");
+						eventKey = getString("What is the key for the event you wish to prescout?").toLowerCase();
 						teamsSelected = tba.getTeamsEvent(eventKey, yearToScout);
 						break;
 					} catch (JSONException e) {
@@ -62,7 +62,7 @@ public class DataFinder {
 				}} while(true);
 				
 				do {try {
-						String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?");
+						String eventKeyPrescout = getString("What " + yearToScout + " event should be used to get statistics to be potentially queried?").toLowerCase();
 						statisticsPotential = tba.getStatistics(yearToScout, eventKeyPrescout);
 						break;
 					} catch (JSONException e) {
