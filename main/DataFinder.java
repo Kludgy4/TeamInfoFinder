@@ -75,7 +75,7 @@ public class DataFinder {
 			}
 			
 			//Saves data to a selected location
-			System.out.println("Attempting to save data...");
+			System.out.println("Attempting to save data - Please navigate to the opened save dialogue");
 			try {
 				saveStatistics(statisticsSelected, teamsSelected);
 				System.out.println("Data was successfully saved!");
@@ -232,6 +232,7 @@ public class DataFinder {
 			shouldTryAgain = false;
 		    chooser = new JFileChooser();
 		    chooser.transferFocus();
+		    
 		    FileFilter filter = new FileNameExtensionFilter(fileExtensionDescription, fileExtension);
 		    chooser.setDialogTitle("Save CSV");
 		    chooser.setAcceptAllFileFilterUsed(false);
