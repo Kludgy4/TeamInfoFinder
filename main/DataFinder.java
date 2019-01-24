@@ -16,6 +16,7 @@ import org.json.JSONException;
 public class DataFinder {
 	
 	public static Scanner reader = new Scanner(System.in);
+	public static int yearToScout;
 	
 	private static APIHandlerFRC tba = new APIHandlerFRC(
 			"http://www.thebluealliance.com/api/v3", 
@@ -23,8 +24,12 @@ public class DataFinder {
 	
 	public static void main(String[] args) throws InterruptedException {
 		checkInternetConnection();
-		
-		int yearToScout = Integer.parseInt(getString("What year would you like to scout?", "2015", "2016", "2017", "2018"));
+		yearToScout = Integer.parseInt(getString("What year would you like to scout?", "2015", "2016", "2017", "2018"));
+		//getDataMain();
+		tba.getEventSchedule("2018ausp");
+	}
+	
+	public static void getDataMain() {
 		String[] statisticsPotential;
 		ArrayList<Team> teamsSelected = new ArrayList<Team>();
 		ArrayList<String> statisticsSelected = new ArrayList<>();

@@ -25,6 +25,31 @@ public class APIHandlerFRC extends APIHandler {
 		super(apiURL, authKey);
 	}
 	
+	public Schedule getEventSchedule(String event) {
+		ArrayList<Match> matches = new ArrayList<>();
+		String information = getInfo("/event/"+ event + "/matches");
+		JSONArray matchInfo = new JSONArray(information);
+
+		for (int i = 0; i <= matchInfo.length(); i++) {
+			JSONObject m = matchInfo.getJSONObject(i);
+			String matchKey = m.getString("key"), eventKey = m.getString("event_key"), compLevel = m.getString("comp_level");
+			int setNumber = m.getInt("set_number"), matchNumber = m.getInt("match_number");
+			int time = m.getInt("time"), actualTime = m.getInt("actual_time"), predictedTime = m.getInt("predicted_time"), postResultTime = m.getInt("post_result_time");
+			String winningAlliance = m.getString("winning_alliance");
+			
+			ArrayList<Alliance> alliances = new ArrayList<>();
+//			alliances.add(new Alliance("red", teams, surrogateTeams, disqualifiedTeams, score));
+//			alliances.add(new Alliance("blue", teams, surrogateTeams, disqualifiedTeams, score));
+//			Match match = new Match(matchKey, compLevel, setNumber, 
+//					matchNumber, alliances, winningAlliance, eventKey, 
+//					time, actualTime, predictedTime, postResultTime);
+			JSONObject info = matchInfo.getJSONObject(i).getJSONObject("alliances");
+		}
+		System.out.println("Finished reading matches");
+		
+		return new Schedule(matches);
+	}
+	
 	/**
 	 * Saves all team media logged on TBA to a given location
 	 * @param teams The teams whose media will be downloaded
